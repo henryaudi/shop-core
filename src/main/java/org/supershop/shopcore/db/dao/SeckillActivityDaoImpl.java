@@ -46,4 +46,16 @@ public class SeckillActivityDaoImpl implements SeckillActivityDao {
 
         return true;
     }
+
+    @Override
+    public boolean deductStock(Long seckillActivityId) {
+        int result = seckillActivityMapper.deductStock(seckillActivityId);
+
+        if (result < 1) {
+            log.error("Failed to deduct from stock.");
+            return false;
+        } else {
+            return true;
+        }
+    }
 }

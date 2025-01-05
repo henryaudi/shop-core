@@ -1,7 +1,9 @@
 package org.supershop.shopcore.service;
 
 import com.alibaba.fastjson.JSON;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.supershop.shopcore.db.dao.OrderDao;
 import org.supershop.shopcore.db.dao.SeckillActivityDao;
 import org.supershop.shopcore.db.po.Order;
 import org.supershop.shopcore.db.po.SeckillActivity;
@@ -9,7 +11,9 @@ import org.supershop.shopcore.mq.RocketMQService;
 import org.supershop.shopcore.util.SnowFlake;
 
 import javax.annotation.Resource;
+import java.util.Date;
 
+@Slf4j
 @Service
 public class SeckillActivityService {
 
@@ -21,6 +25,9 @@ public class SeckillActivityService {
 
     @Resource
     private RocketMQService rocketMQService;
+
+    @Resource
+    private OrderDao orderDao;
 
     private SnowFlake snowFlake = new SnowFlake(1, 1);
 
@@ -48,5 +55,21 @@ public class SeckillActivityService {
         rocketMQService.sendMessage("seckill_order", JSON.toJSONString(order));
 
         return order;
+    }
+
+    public void payOrderProcess(String orderNo) {
+        log.info("Payment completed, order number - " + orderNo);
+        Order order = orderDao.queryOrder(orderNo);
+        boolean deductStockResult = seckillActivityDao.deductStock(order.getSeckillActivityId());
+
+        if (deductStockResult) {
+            order.setPayTime(new Date());
+
+            // 0 - invalid order
+            // 1 - Order created pending payment
+            // 2 - Payment complete
+            order.setOrderStatus(2);
+            orderDao.updateOrder(order);
+        }
     }
 }

@@ -1,12 +1,12 @@
 package org.supershop.shopcore.web;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.ModelAndView;
+import org.supershop.shopcore.db.dao.OrderDao;
 import org.supershop.shopcore.db.dao.SeckillActivityDao;
 import org.supershop.shopcore.db.dao.SeckillCommodityDao;
 import org.supershop.shopcore.db.po.Order;
@@ -14,6 +14,7 @@ import org.supershop.shopcore.db.po.SeckillActivity;
 import org.supershop.shopcore.db.po.SeckillCommodity;
 import org.supershop.shopcore.service.SeckillActivityService;
 
+import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -25,13 +26,16 @@ import java.util.Map;
 @Controller
 public class SeckillActivityController {
 
-    @Autowired
+    @Resource
+    private OrderDao orderDao;
+
+    @Resource
     private SeckillActivityDao seckillActivityDao;
 
-    @Autowired
+    @Resource
     private SeckillCommodityDao seckillCommodityDao;
 
-    @Autowired
+    @Resource
     private SeckillActivityService seckillActivityService;
 
     @RequestMapping("/addSeckillActivityAction")
@@ -132,5 +136,34 @@ public class SeckillActivityController {
         modelAndView.setViewName("seckill_result");
 
         return modelAndView;
+    }
+
+    @RequestMapping("/seckill/orderQuery/{orderNo}")
+    public ModelAndView orderQuery(
+            @PathVariable String orderNo
+    ) {
+        log.info("Query order number: " + orderNo);
+        Order order = orderDao.queryOrder(orderNo);
+        ModelAndView modelAndView = new ModelAndView();
+
+        if (order != null) {
+            modelAndView.setViewName("order");
+            modelAndView.addObject("order", order);
+            SeckillActivity seckillActivity = seckillActivityDao.querySeckillActivityById(order.getSeckillActivityId());
+            modelAndView.addObject("seckillActivity", seckillActivity);
+        } else {
+            modelAndView.setViewName("order_wait");
+        }
+
+        return modelAndView;
+    }
+
+    @RequestMapping("/seckill/payOrder/{orderNo}")
+    public String payOrder(
+            @PathVariable String orderNo
+    ) throws Exception {
+        seckillActivityService.payOrderProcess(orderNo);
+
+        return "redirect:/seckill/orderQuery/" + orderNo;
     }
 }

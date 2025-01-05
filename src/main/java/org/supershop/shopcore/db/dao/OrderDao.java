@@ -4,10 +4,10 @@ import org.supershop.shopcore.db.po.Order;
 
 public interface OrderDao {
 
-    void insertOrder(Order order);
+    public void insertOrder(Order order);
 
-    Order queryOrder(String orderNo);
+    public Order queryOrder(String orderNo);
 
-    void updateOrder(Order order);
+    public void updateOrder(Order order);
 
 }

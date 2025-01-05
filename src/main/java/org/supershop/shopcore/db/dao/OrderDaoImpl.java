@@ -1,10 +1,12 @@
 package org.supershop.shopcore.db.dao;
 
+import org.springframework.stereotype.Repository;
 import org.supershop.shopcore.db.mappers.OrderMapper;
 import org.supershop.shopcore.db.po.Order;
 
 import javax.annotation.Resource;
 
+@Repository
 public class OrderDaoImpl implements OrderDao {
 
     @Resource

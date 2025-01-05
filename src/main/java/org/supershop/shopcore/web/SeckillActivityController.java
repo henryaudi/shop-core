@@ -1,14 +1,18 @@
 package org.supershop.shopcore.web;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.ModelAndView;
 import org.supershop.shopcore.db.dao.SeckillActivityDao;
 import org.supershop.shopcore.db.dao.SeckillCommodityDao;
+import org.supershop.shopcore.db.po.Order;
 import org.supershop.shopcore.db.po.SeckillActivity;
 import org.supershop.shopcore.db.po.SeckillCommodity;
+import org.supershop.shopcore.service.SeckillActivityService;
 
 import java.math.BigDecimal;
 import java.text.ParseException;
@@ -16,6 +20,8 @@ import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.Map;
 
+
+@Slf4j
 @Controller
 public class SeckillActivityController {
 
@@ -24,6 +30,9 @@ public class SeckillActivityController {
 
     @Autowired
     private SeckillCommodityDao seckillCommodityDao;
+
+    @Autowired
+    private SeckillActivityService seckillActivityService;
 
     @RequestMapping("/addSeckillActivityAction")
     public String addSeckillActivityAction(
@@ -92,5 +101,36 @@ public class SeckillActivityController {
         resultMap.put("commodityDesc", seckillCommodity.getCommodityDesc());
 
         return "seckill_item";
+    }
+
+    @RequestMapping("/seckill/buy/{userId}/{seckillActivityId}")
+    public ModelAndView seckillCommodity(
+            @PathVariable long userId,
+            @PathVariable long seckillActivityId
+    ) {
+        boolean stockValidateResult = false;
+
+        ModelAndView modelAndView = new ModelAndView();
+
+        try {
+            stockValidateResult = seckillActivityService.seckillStockValidator(seckillActivityId);
+            if (stockValidateResult) {
+                Order order = seckillActivityService.createOrder(seckillActivityId, userId);
+                modelAndView.addObject(
+                        "resultInfo",
+                        "Order placed successfully! Creating order ID, please wait... Order ID: "
+                                + order.getOrderNo());
+                modelAndView.addObject("orderNo", order.getOrderNo());
+            } else {
+                modelAndView.addObject("resultInfo", "Sorry, the item is out.");
+            }
+        } catch (Exception exception) {
+            log.error("Error: " + exception.toString());
+            modelAndView.addObject("resultInfo", "Failed to proceed the order");
+        }
+
+        modelAndView.setViewName("seckill_result");
+
+        return modelAndView;
     }
 }

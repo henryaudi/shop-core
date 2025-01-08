@@ -3,7 +3,7 @@ package org.supershop.shopcore;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.supershop.shopcore.service.RedisService;
+import org.supershop.shopcore.util.RedisService;
 
 import javax.annotation.Resource;
 

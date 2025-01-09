@@ -2,11 +2,14 @@ package org.supershop.shopcore.service;
 
 import com.alibaba.fastjson.JSON;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.supershop.shopcore.db.dao.OrderDao;
 import org.supershop.shopcore.db.dao.SeckillActivityDao;
+import org.supershop.shopcore.db.dao.SeckillCommodityDao;
 import org.supershop.shopcore.db.po.Order;
 import org.supershop.shopcore.db.po.SeckillActivity;
+import org.supershop.shopcore.db.po.SeckillCommodity;
 import org.supershop.shopcore.mq.RocketMQService;
 import org.supershop.shopcore.util.RedisService;
 import org.supershop.shopcore.util.SnowFlake;
@@ -18,16 +21,19 @@ import java.util.Date;
 @Service
 public class SeckillActivityService {
 
-    @Resource
+    @Autowired
     private RedisService redisService;
 
-    @Resource
+    @Autowired
     private SeckillActivityDao seckillActivityDao;
 
-    @Resource
+    @Autowired
     private RocketMQService rocketMQService;
 
-    @Resource
+    @Autowired
+    SeckillCommodityDao seckillCommodityDao;
+
+    @Autowired
     private OrderDao orderDao;
 
     private SnowFlake snowFlake = new SnowFlake(1, 1);
@@ -85,5 +91,13 @@ public class SeckillActivityService {
          * 3. Send message notifying payment complete.
          */
         rocketMQService.sendMessage("pay_done", JSON.toJSONString(order));
+    }
+
+    public void pushSeckillInfoToRedis(long seckillActivityId) {
+        SeckillActivity seckillActivity = seckillActivityDao.querySeckillActivityById(seckillActivityId);
+        redisService.setValue("seckillActivity:" + seckillActivityId, JSON.toJSONString(seckillActivity));
+
+        SeckillCommodity seckillCommodity = seckillCommodityDao.querySeckillCommodityById(seckillActivity.getCommodityId());
+        redisService.setValue("seckillCommodity:" + seckillActivity.getCommodityId(), JSON.toJSONString(seckillCommodity));
     }
 }

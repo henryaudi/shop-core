@@ -8,47 +8,35 @@ import org.apache.rocketmq.spring.core.RocketMQListener;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-import org.supershop.shopcore.db.dao.OrderDao;
 import org.supershop.shopcore.db.dao.SeckillActivityDao;
 import org.supershop.shopcore.db.po.Order;
 import org.supershop.shopcore.util.RedisService;
 
+import javax.annotation.Resource;
 import java.nio.charset.StandardCharsets;
-import java.util.Date;
 
 @Slf4j
 @Component
-@RocketMQMessageListener(topic = "seckill_order", consumerGroup = "seckill_order_group")
-public class OrderConsumer implements RocketMQListener<MessageExt> {
-
-    @Autowired
-    private OrderDao orderDao;
+@Transactional
+@RocketMQMessageListener(topic = "pay_done", consumerGroup = "pay_done_group")
+public class PayDoneConsumer implements RocketMQListener<MessageExt> {
 
     @Autowired
     private SeckillActivityDao seckillActivityDao;
 
-    @Autowired
+    @Resource
     private RedisService redisService;
 
     @Override
-    @Transactional
     public void onMessage(MessageExt messageExt) {
-        // 1. Parse order creation request message:JSON.
+        // Get request body.
         String message = new String(messageExt.getBody(), StandardCharsets.UTF_8);
-        log.info("Order creation request has been received: " + message);
+        log.info("Received order creation request: " + message);
         Order order = JSON.parseObject(message, Order.class);
-        order.setCreateTime(new Date());
 
-        // 2. Lock one item from seckillActivity.
-        boolean lockStockResult = seckillActivityDao.lockStock(order.getSeckillActivityId());
-        if (lockStockResult) {
-            order.setOrderStatus(1);  // Success
-            // Modify the user as a limit member.
-            redisService.addLimitMember(order.getSeckillActivityId(), order.getUserId());
-        } else {
-            order.setOrderStatus(0);  // Failed
-        }
+        // Deduct stock number.
+        seckillActivityDao.deductStock(order.getSeckillActivityId());
 
-        orderDao.insertOrder(order);
+        redisService.removeLimitMember(order.getSeckillActivityId(), order.getUserId());
     }
 }

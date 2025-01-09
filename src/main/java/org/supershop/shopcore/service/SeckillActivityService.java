@@ -56,25 +56,34 @@ public class SeckillActivityService {
         rocketMQService.sendMessage("seckill_order", JSON.toJSONString(order));
 
         // Send message to verify payment after delay.
-        // Test some commit.
         rocketMQService.sendDelayMessage("pay_check", JSON.toJSONString(order), 5);
 
         return order;
     }
 
-    public void payOrderProcess(String orderNo) {
-        log.info("Payment completed, order number - " + orderNo);
+    public void payOrderProcess(String orderNo) throws Exception {
+        log.info("Payment complete, order Number: " + orderNo);
         Order order = orderDao.queryOrder(orderNo);
-        boolean deductStockResult = seckillActivityDao.deductStock(order.getSeckillActivityId());
-
-        if (deductStockResult) {
-            order.setPayTime(new Date());
-
-            // 0 - invalid order
-            // 1 - Order created pending payment
-            // 2 - Payment complete
-            order.setOrderStatus(2);
-            orderDao.updateOrder(order);
+        /*
+         * 1. Determine if the order exists.
+         */
+        if (order == null) {
+            log.error("Cannot find a match for order - " + orderNo);
+            return;
+        } else if(order.getOrderStatus() != 1 ) {
+            log.error("Invalid order number: " + orderNo);
+            return;
         }
+        /*
+         * 2.Order payment complete.
+         */
+        order.setPayTime(new Date());
+        //Order status: 0 - out of stock. 1 - Created pending payment. 2 - Payment complete
+        order.setOrderStatus(2);
+        orderDao.updateOrder(order);
+        /*
+         * 3. Send message notifying payment complete.
+         */
+        rocketMQService.sendMessage("pay_done", JSON.toJSONString(order));
     }
 }

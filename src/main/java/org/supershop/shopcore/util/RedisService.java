@@ -1,5 +1,6 @@
 package org.supershop.shopcore.util;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
@@ -7,6 +8,7 @@ import redis.clients.jedis.JedisPool;
 import javax.annotation.Resource;
 import java.util.Collections;
 
+@Slf4j
 @Service
 public class RedisService {
 
@@ -70,9 +72,22 @@ public class RedisService {
         jedisClient.close();
     }
 
+    public void addLimitMember(long activityId, long userId) {
+        Jedis jedisClient = jedisPool.getResource();
+        jedisClient.sadd("seckillActivity_users:" + activityId, String.valueOf(userId));
+    }
+
     public void removeLimitMember(long activityId, long userId) {
         Jedis jedisClient = jedisPool.getResource();
         jedisClient.srem("seckillActivity_users:" + activityId, String.valueOf(userId));
         jedisClient.close();
+    }
+
+    public boolean isInLimitMember(long activityId, long userId) {
+        Jedis jedisClient = jedisPool.getResource();
+        boolean sismember = jedisClient.sismember("seckillActivity_users:" + activityId, String.valueOf(userId));
+        jedisClient.close();
+        log.info("userId:{}  activityId:{}  already_ordered:{}", activityId, userId, sismember);
+        return sismember;
     }
 }

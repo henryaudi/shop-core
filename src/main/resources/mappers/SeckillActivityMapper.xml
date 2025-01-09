@@ -111,6 +111,7 @@
       </if>
     </trim>
   </insert>
+
   <update id="updateByPrimaryKeySelective" parameterType="org.supershop.shopcore.db.po.SeckillActivity">
     update seckill_activity
     <set>
@@ -147,6 +148,7 @@
     </set>
     where id = #{id,jdbcType=BIGINT}
   </update>
+
   <update id="updateByPrimaryKey" parameterType="org.supershop.shopcore.db.po.SeckillActivity">
     update seckill_activity
     set name = #{name,jdbcType=VARCHAR},
@@ -161,6 +163,7 @@
       lock_stock = #{lockStock,jdbcType=BIGINT}
     where id = #{id,jdbcType=BIGINT}
   </update>
+
   <update id="lockStock" parameterType="java.lang.Long">
     update seckill_activity
     set available_stock = available_stock - 1,
@@ -168,13 +171,14 @@
     where id = #{id,jdbcType=BIGINT}
     and available_stock > 0
   </update>
+
   <update id="deductStock" parameterType="java.lang.Long">
-    UPDATE seckill_activity
-    SET lock_stock = lock_stock - 1
-    WHERE id = #{id,jdbcType=BIGINT}
+    update seckill_activity
+    set lock_stock = lock_stock - 1
+    where id = #{id,jdbcType=BIGINT}
   </update>
-  <select id="querySeckillActivitysByStatus" parameterType="java.lang.Integer"
-          resultMap="BaseResultMap">
+
+  <select id="querySeckillActivitysByStatus" parameterType="java.lang.Integer" resultMap="BaseResultMap">
     select
     <include refid="Base_Column_List"/>
     from seckill_activity

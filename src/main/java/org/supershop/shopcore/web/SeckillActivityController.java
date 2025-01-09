@@ -1,6 +1,7 @@
 package org.supershop.shopcore.web;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -13,8 +14,8 @@ import org.supershop.shopcore.db.po.Order;
 import org.supershop.shopcore.db.po.SeckillActivity;
 import org.supershop.shopcore.db.po.SeckillCommodity;
 import org.supershop.shopcore.service.SeckillActivityService;
+import org.supershop.shopcore.util.RedisService;
 
-import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -26,17 +27,20 @@ import java.util.Map;
 @Controller
 public class SeckillActivityController {
 
-    @Resource
-    private OrderDao orderDao;
-
-    @Resource
+    @Autowired
     private SeckillActivityDao seckillActivityDao;
 
-    @Resource
+    @Autowired
     private SeckillCommodityDao seckillCommodityDao;
 
-    @Resource
-    private SeckillActivityService seckillActivityService;
+    @Autowired
+    SeckillActivityService seckillActivityService;
+
+    @Autowired
+    private OrderDao orderDao;
+
+    @Autowired
+    RedisService redisService;
 
     @RequestMapping("/addSeckillActivityAction")
     public String addSeckillActivityAction(
@@ -113,24 +117,33 @@ public class SeckillActivityController {
             @PathVariable long seckillActivityId
     ) {
         boolean stockValidateResult = false;
-
         ModelAndView modelAndView = new ModelAndView();
 
         try {
+            // Is the user a limit member?
+            if (redisService.isInLimitMember(seckillActivityId, userId)) {
+                // Notify that the user's already a limit member thus cannot order, and return.
+                modelAndView.addObject(
+                        "resultInfo", "Sorry, it looks like you already ordered the item!");
+                modelAndView.setViewName("seckill_result");
+                return modelAndView;
+            }
+            // Not limit member, check stock availability.
             stockValidateResult = seckillActivityService.seckillStockValidator(seckillActivityId);
             if (stockValidateResult) {
                 Order order = seckillActivityService.createOrder(seckillActivityId, userId);
                 modelAndView.addObject(
                         "resultInfo",
-                        "Order placed successfully! Creating order ID, please wait... Order ID: "
-                                + order.getOrderNo());
+                        "Order success! Generating the order. Order Number: " + order.getOrderNo());
                 modelAndView.addObject("orderNo", order.getOrderNo());
             } else {
-                modelAndView.addObject("resultInfo", "Sorry, the item is out.");
+                modelAndView.addObject(
+                        "resultInfo",
+                        "Sorry, the item is currently out of stock!");
             }
         } catch (Exception exception) {
             log.error("Error: " + exception.toString());
-            modelAndView.addObject("resultInfo", "Failed to proceed the order");
+            modelAndView.addObject("resultInfo", "Failed to process your order");
         }
 
         modelAndView.setViewName("seckill_result");

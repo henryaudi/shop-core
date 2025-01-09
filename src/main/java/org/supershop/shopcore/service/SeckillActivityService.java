@@ -56,6 +56,7 @@ public class SeckillActivityService {
         rocketMQService.sendMessage("seckill_order", JSON.toJSONString(order));
 
         // Send message to verify payment after delay.
+        // Test some commit.
         rocketMQService.sendDelayMessage("pay_check", JSON.toJSONString(order), 5);
 
         return order;

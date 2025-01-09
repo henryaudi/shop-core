@@ -5,7 +5,7 @@ import org.springframework.boot.ApplicationRunner;
 import org.springframework.stereotype.Component;
 import org.supershop.shopcore.db.dao.SeckillActivityDao;
 import org.supershop.shopcore.db.po.SeckillActivity;
-import org.supershop.shopcore.service.RedisService;
+import org.supershop.shopcore.util.RedisService;
 
 import javax.annotation.Resource;
 import java.util.List;

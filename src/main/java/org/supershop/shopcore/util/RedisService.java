@@ -1,4 +1,4 @@
-package org.supershop.shopcore.service;
+package org.supershop.shopcore.util;
 
 import org.springframework.stereotype.Service;
 import redis.clients.jedis.Jedis;
@@ -19,6 +19,12 @@ public class RedisService {
         client.close();
 
         return this;
+    }
+
+    public void setValue(String key, String value) {
+        Jedis jedisClient = jedisPool.getResource();
+        jedisClient.set(key, value);
+        jedisClient.close();
     }
 
     public String getValue(String key) {
@@ -58,4 +64,15 @@ public class RedisService {
         }
     }
 
+    public void revertStock(String key) {
+        Jedis jedisClient = jedisPool.getResource();
+        jedisClient.incr(key);
+        jedisClient.close();
+    }
+
+    public void removeLimitMember(long activityId, long userId) {
+        Jedis jedisClient = jedisPool.getResource();
+        jedisClient.srem("seckillActivity_users:" + activityId, String.valueOf(userId));
+        jedisClient.close();
+    }
 }

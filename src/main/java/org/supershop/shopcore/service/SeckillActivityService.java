@@ -8,6 +8,7 @@ import org.supershop.shopcore.db.dao.SeckillActivityDao;
 import org.supershop.shopcore.db.po.Order;
 import org.supershop.shopcore.db.po.SeckillActivity;
 import org.supershop.shopcore.mq.RocketMQService;
+import org.supershop.shopcore.util.RedisService;
 import org.supershop.shopcore.util.SnowFlake;
 
 import javax.annotation.Resource;
@@ -53,6 +54,9 @@ public class SeckillActivityService {
 
         // Send creation message to MQ.
         rocketMQService.sendMessage("seckill_order", JSON.toJSONString(order));
+
+        // Send message to verify payment after delay.
+        rocketMQService.sendDelayMessage("pay_check", JSON.toJSONString(order), 5);
 
         return order;
     }

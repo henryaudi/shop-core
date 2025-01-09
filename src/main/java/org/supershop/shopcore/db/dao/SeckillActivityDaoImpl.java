@@ -7,6 +7,7 @@ import org.springframework.stereotype.Repository;
 
 import javax.annotation.Resource;
 import java.util.List;
+import java.util.Objects;
 
 @Slf4j
 @Repository
@@ -57,5 +58,10 @@ public class SeckillActivityDaoImpl implements SeckillActivityDao {
         } else {
             return true;
         }
+    }
+
+    @Override
+    public void revertStock(Long seckillActivityId) {
+        seckillActivityMapper.revertStock(seckillActivityId);
     }
 }

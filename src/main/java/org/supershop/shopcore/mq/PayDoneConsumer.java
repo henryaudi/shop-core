@@ -36,7 +36,6 @@ public class PayDoneConsumer implements RocketMQListener<MessageExt> {
 
         // Deduct stock number.
         seckillActivityDao.deductStock(order.getSeckillActivityId());
-
         redisService.removeLimitMember(order.getSeckillActivityId(), order.getUserId());
     }
 }

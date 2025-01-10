@@ -12,6 +12,9 @@ import static org.junit.jupiter.api.Assertions.*;
 class RedisServiceTest {
 
     @Resource
+    SeckillActivityService seckillActivityService;
+
+    @Resource
     private RedisService service;
 
     @Test
@@ -34,4 +37,10 @@ class RedisServiceTest {
         String value = service.getValue("test:1");
         assertEquals(new Long(value), 99L);
     }
+
+    @Test
+    public void pushSeckillInfoToRedisTest(){
+        seckillActivityService.pushSeckillInfoToRedis(19);
+    }
+
 }

@@ -103,6 +103,7 @@ public class SeckillActivityController {
         SeckillActivity seckillActivity;
         SeckillCommodity seckillCommodity;
 
+        // Check if the seckillActivity was already loaded in Redis.
         String seckillActivityInfo = redisService.getValue("seckillActivity:" + seckillActivityId);
         if (StringUtils.isNotEmpty(seckillActivityInfo)) {
             log.info("redis:" + seckillActivityInfo);

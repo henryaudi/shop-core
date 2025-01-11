@@ -1,5 +1,8 @@
 package org.supershop.shopcore.web;
 
+import com.alibaba.csp.sentinel.Entry;
+import com.alibaba.csp.sentinel.SphU;
+import com.alibaba.csp.sentinel.slots.block.BlockException;
 import com.alibaba.fastjson.JSON;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -84,10 +87,14 @@ public class SeckillActivityController {
             Map<String, Object> resultMap
     ) {
 
-        List<SeckillActivity> seckillActivities = seckillActivityDao.querySeckillActivitysByStatus(1);
-        resultMap.put("seckillActivities", seckillActivities);
-
-        return "seckill_activity";
+        try (Entry entry = SphU.entry("seckills")) {
+            List<SeckillActivity> seckillActivities = seckillActivityDao.querySeckillActivitysByStatus(1);
+            resultMap.put("seckillActivities", seckillActivities);
+            return "seckill_activity";
+        } catch (BlockException e) {
+            log.error("Seckills page flow restricted: " + e.toString());
+            return "wait";
+        }
     }
 
     @RequestMapping("/addSeckillActivity")
